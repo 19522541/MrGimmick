@@ -19,10 +19,10 @@ public:
     //void Draw();
     void Draw(D3DXVECTOR3 position = D3DXVECTOR3(),RECT sourceRect = RECT(), D3DXVECTOR2 scale = D3DXVECTOR2(), D3DXVECTOR2 transform = D3DXVECTOR2(), float angle = 0, D3DXVECTOR2 rotationCenter = D3DXVECTOR2(), D3DXCOLOR colorKey = D3DCOLOR_XRGB(255, 255, 255));
 
-    void SetWidth(int  width);
-    int  GetWidth();
+    void SetWidth(int width);
+    int GetWidth();
 
-    void SetHeight(int  height);
+    void SetHeight(int height);
     int GetHeight();
 
     D3DXIMAGE_INFO GetImageInfo(); // lay thong tin thuc cua hinh anh duoc lay

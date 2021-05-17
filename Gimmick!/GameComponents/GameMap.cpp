@@ -5,6 +5,7 @@ using namespace Define;
 GameMap::GameMap(const char* filePath)
 {
     LoadMap(filePath);
+    mCamera = new Camera(GameGlobal::GetWidth(), GameGlobal::GetHeight());
 }
 
 GameMap::~GameMap()
@@ -23,14 +24,108 @@ void GameMap::LoadMap(const char* filePath)
     r.right = this->GetWidth();
     r.bottom = this->GetHeight();
 
+    mQuadTree = new QuadTree(1, r);
+
     for (size_t i = 0; i < mMap->GetNumTilesets(); i++)
     {
-        const Tmx::Tileset *tileset = mMap->GetTileset(i);
+        const Tmx::Tileset* tileset = mMap->GetTileset(i);
 
-        Sprite* sprite = new Sprite(tileset->GetImage()->GetSource().c_str(), RECT(), 0, 0, 0xff000000);
-
-        mListTileset.insert(std::pair<int, Sprite*>(i, sprite));
+        Sprite* sprite = new Sprite(tileset->GetImage()->GetSource().c_str());
+        mListTileset.insert(pair<int, Sprite*>(i, sprite));
     }
+
+    //khoi tao cac khoi Brick (vien gach)
+#pragma region -BRICK AND COIN LAYER-
+    for (size_t i = 0; i < GetMap()->GetNumTileLayers(); i++)
+    {
+        const Tmx::TileLayer* layer = mMap->GetTileLayer(i);
+
+        //if (layer->IsVisible())
+            //continue;
+
+        //xac dinh layer Brick bi an di de tu do tao ra cac vien gach trong game, nhung vien gach khong phai la 1 physic static nos co the bi pha huy duoc
+
+        if (layer->GetName() == "Brick" || layer->GetName() == "coin")
+        {
+            for (size_t j = 0; j < mMap->GetNumTilesets(); j++)
+            {
+                const Tmx::Tileset* tileSet = mMap->GetTileset(j);
+
+                int tileWidth = mMap->GetTileWidth();
+                int tileHeight = mMap->GetTileHeight();
+
+                int tileSetWidth = tileSet->GetImage()->GetWidth() / tileWidth;
+                int tileSetHeight = tileSet->GetImage()->GetHeight() / tileHeight;
+
+                for (size_t n = 0; n < layer->GetWidth(); n++)
+                {
+                    for (size_t m = 0; m < layer->GetHeight(); m++)
+                    {
+                        if (layer->GetTileTilesetIndex(n, m) != -1)
+                        {
+                           /* int tileID = layer->GetTileId(n, m);
+
+                            int y = tileID / tileSetWidth;
+                            int x = tileID - y * tileSetWidth;*/
+
+                            /*RECT sourceRECT;
+                            sourceRECT.top = y * tileHeight;
+                            sourceRECT.bottom = sourceRECT.top + tileHeight;
+                            sourceRECT.left = x * tileWidth;
+                            sourceRECT.right = sourceRECT.left + tileWidth;
+
+                            RECT bound;
+                            bound.left = n * tileWidth;
+                            bound.top = m * tileHeight;
+                            bound.right = bound.left + tileWidth;
+                            bound.bottom = bound.top + tileHeight;*/
+
+                            D3DXVECTOR3 position(n * tileWidth + tileWidth /2, m * tileHeight + tileHeight /2 , 0);
+
+                            Brick* brick = nullptr;
+                            brick = new BrickNormal(position);
+                            brick->SetHeight(tileHeight);
+                            brick->SetWidth(tileWidth);
+                            brick->Tag = Entity::EntityTypes::Brick;
+                            mListBricks.push_back(brick);
+                            
+
+
+                            if (brick)
+                                mQuadTree->insertEntity(brick);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+#pragma endregion
+
+#pragma region -OBJECTGROUP, STATIC OBJECT-
+
+    for (size_t i = 0; i < mMap->GetNumObjectGroups(); i++)
+    {
+        const Tmx::ObjectGroup* objectGroup = mMap->GetObjectGroup(i);
+
+        for (size_t j = 0; j < objectGroup->GetNumObjects(); j++)
+        {
+            //lay object group chu khong phai layer
+            //object group se chua nhung body
+            Tmx::Object* object = objectGroup->GetObjects().at(j);
+
+            Entity* entity = new Entity();
+            entity->SetPosition(object->GetX() + object->GetWidth() / 2,
+                object->GetY() + object->GetHeight() / 2);
+            entity->SetWidth(object->GetWidth());
+            entity->SetHeight(object->GetHeight());
+            entity->Tag = Entity::EntityTypes::Static;
+
+            mQuadTree->insertEntity(entity);
+        }
+    }
+    
+#pragma endregion
     LoadMap1Animation();
 }
 
@@ -143,58 +238,11 @@ void GameMap::DrawAnimation(const Tmx::TileLayer *layer, D3DXVECTOR2 trans)
     int tileWidth = mMap->GetTileWidth();
     int tileHeight = mMap->GetTileHeight();
 
-    //if (mCamera != NULL) {
-    //    int l, r,t,b;
-    ////    mCamera->GetBound();
-    //    l = mCamera->GetBound().left/tileWidth;
-    //    r = mCamera->GetBound().right / tileWidth+1;
-    //    t= mCamera->GetBound().top / tileHeight;
-    //    b = mCamera->GetBound().bottom / tileHeight+1;
-    //    for (int i = l;i < r&& i < layer->GetWidth();i++) {
-    //        for (int j = t;j < b&& j < layer->GetHeight();j++) {
-    //          
-    //            int tilesetIndex= layer->GetTileTilesetIndex(j, i);
-    //            if (tilesetIndex != -1)
-    //                        {
-    //                            int tileID = layer->GetTileId(j, i);
-
-    //                            //wchar_t buffer[256];
-    //                            //wsprintfW(buffer, L"%d, %d, %d", tileID);
-    //                            //MessageBoxW(nullptr, buffer, buffer, MB_OK);
-
-    //                           D3DXVECTOR3 position(j * tileWidth + tileWidth / 2, i * tileHeight + tileHeight / 2, 0);
-
-    //                            if (mCamera != NULL)
-    //                           {
-    //                                RECT objRECT;
-    //                                objRECT.left = position.x - tileWidth / 2;
-    //                                objRECT.top = position.y - tileHeight / 2;
-    //                                objRECT.right = objRECT.left + tileWidth;
-    //                                objRECT.bottom = objRECT.top + tileHeight;
-    //                                
-    //                                //neu nam ngoai camera thi khong Draw
-    //                                if (isContain(objRECT, mCamera->GetBound()) == false)
-    //                                    continue;
-    //                                    
-    //                            }
-    //                           mListAnimation[(TypeAniMap1)(tileID + 1)]->Draw(position, RECT(), D3DXVECTOR2(), trans);
-    //                        }
-    //        
-    //        
-    //        }
-    //    
-    //    }
-
-
-    //
-    //
-    //}
-    for (size_t m = mCamera->GetBound().top/tileHeight; m < layer->GetHeight()&& m<mCamera->GetBound().bottom/tileHeight; m++)
+    for (size_t m = 0; m < layer->GetHeight(); m++)
     {
-       for (size_t n = mCamera->GetBound().left/tileWidth; n < layer->GetWidth()&&m<mCamera->GetBound().right/tileWidth; n++)
-       {    
+        for (size_t n = 0; n < layer->GetWidth(); n++)
+        {
             int tilesetIndex = layer->GetTileTilesetIndex(n, m);
-            if (m < 0 || n < 0) tilesetIndex = -1;
 
             if (tilesetIndex != -1)
             {
@@ -204,9 +252,21 @@ void GameMap::DrawAnimation(const Tmx::TileLayer *layer, D3DXVECTOR2 trans)
                 //wsprintfW(buffer, L"%d, %d, %d", tileID);
                 //MessageBoxW(nullptr, buffer, buffer, MB_OK);
 
-               D3DXVECTOR3 position(n * tileWidth + tileWidth / 2, m * tileHeight + tileHeight / 2, 0);
+                D3DXVECTOR3 position(n * tileWidth + tileWidth / 2, m * tileHeight + tileHeight / 2, 0);
 
-               
+                if (mCamera != NULL)
+                {
+                    RECT objRECT;
+                    objRECT.left = position.x - tileWidth / 2;
+                    objRECT.top = position.y - tileHeight / 2;
+                    objRECT.right = objRECT.left + tileWidth;
+                    objRECT.bottom = objRECT.top + tileHeight;
+                    
+                    //neu nam ngoai camera thi khong Draw
+                    if (isContain(objRECT, mCamera->GetBound()) == false)
+                        continue;
+                        
+                }
                 mListAnimation[(TypeAniMap1)(tileID + 1)]->Draw(position, RECT(), D3DXVECTOR2(), trans);
             }
         }
@@ -215,7 +275,8 @@ void GameMap::DrawAnimation(const Tmx::TileLayer *layer, D3DXVECTOR2 trans)
 
 void GameMap::Draw()
 {
-    D3DXVECTOR2 trans = D3DXVECTOR2((GameGlobal::GetWidth() )/ 2 - (int)mCamera->GetPosition().x, (mCamera->GetHeight())/2 -(int) mCamera->GetPosition().y);
+    D3DXVECTOR2 trans = D3DXVECTOR2(GameGlobal::GetWidth() / 2 - mCamera->GetPosition().x,
+                                    mCamera->GetHeight() / 2 - mCamera->GetPosition().y);
 
 
     for (size_t i = 0; i < mMap->GetNumTileLayers(); i++)
@@ -237,22 +298,19 @@ void GameMap::Draw()
         int tileWidth = mMap->GetTileWidth();
         int tileHeight = mMap->GetTileHeight();
 
-        for (int  m = (int)mCamera->GetBound().top/tileHeight; m < layer->GetHeight()&& m<mCamera->GetBound().bottom/tileHeight+1; m++)
+        for (size_t m = 0; m < layer->GetHeight(); m++)
         {
-            for (int n=(int) mCamera->GetBound().left/tileWidth; n < layer->GetWidth()&&n<mCamera->GetBound().right/tileWidth+1; n++)
-            { 
-              
-                int tilesetIndex ;
-                if (m < 0 || n < 0) tilesetIndex = -1;
-                else  tilesetIndex = layer->GetTileTilesetIndex(n, m);
+            for (size_t n = 0; n < layer->GetWidth(); n++)
+            {
+                int tilesetIndex = layer->GetTileTilesetIndex(n, m);
 
-                if (tilesetIndex !=-1)
+                if (tilesetIndex != -1)
                 {
                     const Tmx::Tileset *tileSet = mMap->GetTileset(tilesetIndex);
 
                     int tileSetWidth = tileSet->GetImage()->GetWidth() / tileWidth;
                     int tileSetHeight = tileSet->GetImage()->GetHeight() / tileHeight;
-                   
+
                     Sprite* sprite = mListTileset[layer->GetTileTilesetIndex(n, m)];
 
                     //tile index
@@ -270,18 +328,18 @@ void GameMap::Draw()
                     //dung toa do (0,0) cua the gioi thuc la (0,0) neu khong thi se la (-tilewidth/2, -tileheigth/2);
                     D3DXVECTOR3 position(n * tileWidth + tileWidth / 2, m * tileHeight + tileHeight / 2, 0);
 
-                    //if (mCamera != NULL)
-                    //{
-                    //    RECT objRECT;
-                    //    objRECT.left = position.x - tileWidth / 2;
-                    //    objRECT.top = position.y - tileHeight / 2;
-                    //    objRECT.right = objRECT.left + tileWidth;
-                    //    objRECT.bottom = objRECT.top + tileHeight;
+                    if (mCamera != NULL)
+                    {
+                        RECT objRECT;
+                        objRECT.left = position.x - tileWidth / 2;
+                        objRECT.top = position.y - tileHeight / 2;
+                        objRECT.right = objRECT.left + tileWidth;
+                        objRECT.bottom = objRECT.top + tileHeight;
 
-                    //    //neu nam ngoai camera thi khong Draw
-                    //    if (isContain(objRECT, mCamera->GetBound()) == false)
-                    //        continue;
-                    //}
+                        //neu nam ngoai camera thi khong Draw
+                        if (isContain(objRECT, mCamera->GetBound()) == false)
+                            continue;
+                    }
 
                     sprite->SetWidth(tileWidth);
                     sprite->SetHeight(tileHeight);
@@ -304,4 +362,29 @@ void GameMap::Update(float dt)
     for (i = mListAnimation.begin(); i != mListAnimation.end(); i++) {
         (*i).second->Update(dt);
     }
+}
+
+bool GameMap::IsBoundLeft()
+{
+    return (mCamera->GetBound().left == 0);
+}
+
+bool GameMap::IsBoundRight()
+{
+    return (mCamera->GetBound().right == this->GetWidth());
+}
+
+bool GameMap::IsBoundTop()
+{
+    return (mCamera->GetBound().top == 0);
+}
+
+bool GameMap::IsBoundBottom()
+{
+    return (mCamera->GetBound().bottom == this->GetHeight());
+}
+
+QuadTree* GameMap::GetQuadTree()
+{
+    return mQuadTree;
 }
