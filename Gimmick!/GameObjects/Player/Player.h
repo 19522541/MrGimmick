@@ -9,6 +9,7 @@
 #include "PlayerData.h"
 #include "PlayerState.h"
 #include "PlayerRunningState.h"
+#include "../../GameComponents/Camera.h"
 
 class Player : public Entity
 {
@@ -48,7 +49,7 @@ public:
 
     void SetAllowJump(bool _allowJump);
     bool GetAllowJump() { return allowJump; }
-
+    void GetCamera(Camera *m);
 protected:
     PlayerData *mPlayerData;
 
@@ -60,7 +61,7 @@ protected:
     void changeAnimation(PlayerState::StateName state);
 
     PlayerState::StateName mCurrentState;
-
+    Camera* mCamera;
     //chi cho phep jump khi nhan nhim space, muon nhay lai phai tha phim space roi nhan lai
     bool allowJump, mCurrentReverse;;
 };

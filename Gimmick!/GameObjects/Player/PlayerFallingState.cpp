@@ -2,6 +2,7 @@
 #include "PlayerStandingState.h"
 #include "Player.h"
 #include "../../GameDefines/GameDefine.h"
+#include "../../GameComponents/GameLog.h"
 
 PlayerFallingState::PlayerFallingState(PlayerData* playerData)
 {
@@ -17,6 +18,7 @@ PlayerFallingState::~PlayerFallingState()
 
 void PlayerFallingState::Update(float dt)
 {
+	
 	this->mPlayerData->player->AddVy(acceleratorY);
 
 	if (mPlayerData->player->GetVy() > Define::PLAYER_MAX_JUMP_VELOCITY)
@@ -24,7 +26,7 @@ void PlayerFallingState::Update(float dt)
 		mPlayerData->player->SetVy(Define::PLAYER_MAX_JUMP_VELOCITY);
 	}
 
-	if (mPlayerData->player->GetPosition().y >= Define::GAME_SCREEN_HEIGHT / 2)
+	if (mPlayerData->player->GetPosition().y >= Define::GAME_SCREEN_HEIGHT )
 	{
 		mPlayerData->player->SetVy(0);
 		mPlayerData->player->SetState(new PlayerRunningState(mPlayerData));

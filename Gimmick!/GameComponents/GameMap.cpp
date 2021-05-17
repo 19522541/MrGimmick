@@ -143,11 +143,58 @@ void GameMap::DrawAnimation(const Tmx::TileLayer *layer, D3DXVECTOR2 trans)
     int tileWidth = mMap->GetTileWidth();
     int tileHeight = mMap->GetTileHeight();
 
-    for (size_t m = 0; m < layer->GetHeight(); m++)
+    //if (mCamera != NULL) {
+    //    int l, r,t,b;
+    ////    mCamera->GetBound();
+    //    l = mCamera->GetBound().left/tileWidth;
+    //    r = mCamera->GetBound().right / tileWidth+1;
+    //    t= mCamera->GetBound().top / tileHeight;
+    //    b = mCamera->GetBound().bottom / tileHeight+1;
+    //    for (int i = l;i < r&& i < layer->GetWidth();i++) {
+    //        for (int j = t;j < b&& j < layer->GetHeight();j++) {
+    //          
+    //            int tilesetIndex= layer->GetTileTilesetIndex(j, i);
+    //            if (tilesetIndex != -1)
+    //                        {
+    //                            int tileID = layer->GetTileId(j, i);
+
+    //                            //wchar_t buffer[256];
+    //                            //wsprintfW(buffer, L"%d, %d, %d", tileID);
+    //                            //MessageBoxW(nullptr, buffer, buffer, MB_OK);
+
+    //                           D3DXVECTOR3 position(j * tileWidth + tileWidth / 2, i * tileHeight + tileHeight / 2, 0);
+
+    //                            if (mCamera != NULL)
+    //                           {
+    //                                RECT objRECT;
+    //                                objRECT.left = position.x - tileWidth / 2;
+    //                                objRECT.top = position.y - tileHeight / 2;
+    //                                objRECT.right = objRECT.left + tileWidth;
+    //                                objRECT.bottom = objRECT.top + tileHeight;
+    //                                
+    //                                //neu nam ngoai camera thi khong Draw
+    //                                if (isContain(objRECT, mCamera->GetBound()) == false)
+    //                                    continue;
+    //                                    
+    //                            }
+    //                           mListAnimation[(TypeAniMap1)(tileID + 1)]->Draw(position, RECT(), D3DXVECTOR2(), trans);
+    //                        }
+    //        
+    //        
+    //        }
+    //    
+    //    }
+
+
+    //
+    //
+    //}
+    for (size_t m = mCamera->GetBound().top/tileHeight; m < layer->GetHeight()&& m<mCamera->GetBound().bottom/tileHeight; m++)
     {
-        for (size_t n = 0; n < layer->GetWidth(); n++)
-        {
+       for (size_t n = mCamera->GetBound().left/tileWidth; n < layer->GetWidth()&&m<mCamera->GetBound().right/tileWidth; n++)
+       {    
             int tilesetIndex = layer->GetTileTilesetIndex(n, m);
+            if (m < 0 || n < 0) tilesetIndex = -1;
 
             if (tilesetIndex != -1)
             {
@@ -157,21 +204,9 @@ void GameMap::DrawAnimation(const Tmx::TileLayer *layer, D3DXVECTOR2 trans)
                 //wsprintfW(buffer, L"%d, %d, %d", tileID);
                 //MessageBoxW(nullptr, buffer, buffer, MB_OK);
 
-                D3DXVECTOR3 position(n * tileWidth + tileWidth / 2, m * tileHeight + tileHeight / 2, 0);
+               D3DXVECTOR3 position(n * tileWidth + tileWidth / 2, m * tileHeight + tileHeight / 2, 0);
 
-                if (mCamera != NULL)
-                {
-                    RECT objRECT;
-                    objRECT.left = position.x - tileWidth / 2;
-                    objRECT.top = position.y - tileHeight / 2;
-                    objRECT.right = objRECT.left + tileWidth;
-                    objRECT.bottom = objRECT.top + tileHeight;
-                    
-                    //neu nam ngoai camera thi khong Draw
-                    if (isContain(objRECT, mCamera->GetBound()) == false)
-                        continue;
-                        
-                }
+               
                 mListAnimation[(TypeAniMap1)(tileID + 1)]->Draw(position, RECT(), D3DXVECTOR2(), trans);
             }
         }
@@ -180,8 +215,7 @@ void GameMap::DrawAnimation(const Tmx::TileLayer *layer, D3DXVECTOR2 trans)
 
 void GameMap::Draw()
 {
-    D3DXVECTOR2 trans = D3DXVECTOR2(GameGlobal::GetWidth() / 2 - mCamera->GetPosition().x,
-                                    mCamera->GetHeight() / 2 - mCamera->GetPosition().y);
+    D3DXVECTOR2 trans = D3DXVECTOR2((GameGlobal::GetWidth() )/ 2 - (int)mCamera->GetPosition().x, (mCamera->GetHeight())/2 -(int) mCamera->GetPosition().y);
 
 
     for (size_t i = 0; i < mMap->GetNumTileLayers(); i++)
@@ -203,19 +237,22 @@ void GameMap::Draw()
         int tileWidth = mMap->GetTileWidth();
         int tileHeight = mMap->GetTileHeight();
 
-        for (size_t m = 0; m < layer->GetHeight(); m++)
+        for (int  m = (int)mCamera->GetBound().top/tileHeight; m < layer->GetHeight()&& m<mCamera->GetBound().bottom/tileHeight+1; m++)
         {
-            for (size_t n = 0; n < layer->GetWidth(); n++)
-            {
-                int tilesetIndex = layer->GetTileTilesetIndex(n, m);
+            for (int n=(int) mCamera->GetBound().left/tileWidth; n < layer->GetWidth()&&n<mCamera->GetBound().right/tileWidth+1; n++)
+            { 
+              
+                int tilesetIndex ;
+                if (m < 0 || n < 0) tilesetIndex = -1;
+                else  tilesetIndex = layer->GetTileTilesetIndex(n, m);
 
-                if (tilesetIndex != -1)
+                if (tilesetIndex !=-1)
                 {
                     const Tmx::Tileset *tileSet = mMap->GetTileset(tilesetIndex);
 
                     int tileSetWidth = tileSet->GetImage()->GetWidth() / tileWidth;
                     int tileSetHeight = tileSet->GetImage()->GetHeight() / tileHeight;
-
+                   
                     Sprite* sprite = mListTileset[layer->GetTileTilesetIndex(n, m)];
 
                     //tile index
@@ -233,18 +270,18 @@ void GameMap::Draw()
                     //dung toa do (0,0) cua the gioi thuc la (0,0) neu khong thi se la (-tilewidth/2, -tileheigth/2);
                     D3DXVECTOR3 position(n * tileWidth + tileWidth / 2, m * tileHeight + tileHeight / 2, 0);
 
-                    if (mCamera != NULL)
-                    {
-                        RECT objRECT;
-                        objRECT.left = position.x - tileWidth / 2;
-                        objRECT.top = position.y - tileHeight / 2;
-                        objRECT.right = objRECT.left + tileWidth;
-                        objRECT.bottom = objRECT.top + tileHeight;
+                    //if (mCamera != NULL)
+                    //{
+                    //    RECT objRECT;
+                    //    objRECT.left = position.x - tileWidth / 2;
+                    //    objRECT.top = position.y - tileHeight / 2;
+                    //    objRECT.right = objRECT.left + tileWidth;
+                    //    objRECT.bottom = objRECT.top + tileHeight;
 
-                        //neu nam ngoai camera thi khong Draw
-                        if (isContain(objRECT, mCamera->GetBound()) == false)
-                            continue;
-                    }
+                    //    //neu nam ngoai camera thi khong Draw
+                    //    if (isContain(objRECT, mCamera->GetBound()) == false)
+                    //        continue;
+                    //}
 
                     sprite->SetWidth(tileWidth);
                     sprite->SetHeight(tileHeight);

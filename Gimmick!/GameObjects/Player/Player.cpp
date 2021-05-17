@@ -63,13 +63,19 @@ void Player::SetAllowJump(bool _allowJump)
 }
 
 
+void Player::GetCamera(Camera* m) {
+    this->mCamera = m;
 
+
+}
 void Player::Draw(D3DXVECTOR3 position, RECT sourceRect, D3DXVECTOR2 scale, D3DXVECTOR2 transform, float angle, D3DXVECTOR2 rotationCenter, D3DXCOLOR colorKey)
 {
     mCurrentAnimation->FlipVertical(mCurrentReverse);
     mCurrentAnimation->SetPosition(this->GetPosition());
-
-    mCurrentAnimation->Draw(D3DXVECTOR3(posX, posY, 0));
+    
+    D3DXVECTOR2 tran= D3DXVECTOR2(GameGlobal::GetWidth() / 2 - mCamera->GetPosition().x,
+        GameGlobal::GetHeight() / 2 - mCamera->GetPosition().y);
+    mCurrentAnimation->Draw(D3DXVECTOR3(posX, posY, 0),sourceRect,scale,tran,angle,rotationCenter,colorKey);
 }
 
 void Player::SetState(PlayerState *newState)

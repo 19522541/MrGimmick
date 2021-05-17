@@ -16,13 +16,15 @@ Camera::~Camera()
 }
 
 void Camera::SetPosition(float x, float y)
-{
+{   
+  
     SetPosition(D3DXVECTOR3(x, y, 0));
 }
 
 void Camera::SetPosition(D3DXVECTOR3 pos)
 {
-    mPosition = pos;
+    mPosition.x =  pos.x;
+    mPosition.y = pos.y;
 }
 
 D3DXVECTOR3 Camera::GetPosition()
